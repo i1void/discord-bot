@@ -1,5 +1,5 @@
 import { askAi } from "../../lib/ai.js";
-
+//frieren
 export default {
   name: "ai",
   group: "Chat",
