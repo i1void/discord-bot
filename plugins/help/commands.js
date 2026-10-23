@@ -3,6 +3,7 @@ import { moduleLabel } from "../../lib/meta.js";
 
 export default {
   name: "commands",
+  guildOnly: false,
   aliases: ["cmds"],
   description: "Lists all commands in a module.",
   usage: ["{p}commands <module>"],
