@@ -34,7 +34,7 @@ async function applyAction({ guild, member, author, client }, conf) {
     }
 
     case "mute":
-    case "timeout": // older saved settings
+    case "timeout": // older saved settings.
       if (!member.moderatable) return null;
       await member.timeout(conf.duration, REASON);
       return `**${author.tag}** was muted for **${formatDuration(conf.duration)}** for spamming.`;
