@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from "discord.js";
-import { ACTIONS, disableConfig, getConfig, setConfig } from "../../lib/antispam.js";
+import { ACTIONS, disableConfig, getConfig, getIgnored, setConfig } from "../../lib/antispam.js";
 import { permNames } from "../../lib/meta.js";
 import { formatDuration, parseDuration } from "../../lib/parse.js";
 
@@ -13,12 +13,7 @@ const NEEDS = {
   ban: PermissionFlagsBits.BanMembers,
 };
 
-const RESULT = {
-  warn: () => "warned",
-  mute: duration => `muted for **${formatDuration(duration)}**`,
-  kick: () => "kicked",
-  ban: () => "banned",
-};
+const LABEL = { warn: "Warn", mute: "Mute", kick: "Kick", ban: "Ban" };
 
 export default {
   name: "antispam",
@@ -35,7 +30,7 @@ export default {
       if (!getConfig(ctx.guild.id)) return ctx.usage();
 
       disableConfig(ctx.guild.id);
-      return ctx.ok("Anti-spam is now **off**.", "Anti-spam");
+      return ctx.ok(`${ctx.author} Anti-Spam has been disabled.`, "Anti-Spam Disabled");
     }
 
     const count = Number(ctx.args[0]);
@@ -62,10 +57,16 @@ export default {
 
     setConfig(ctx.guild.id, count, action, duration);
 
+    const ignored =
+      getIgnored(ctx.guild.id)
+        .map(id => `<#${id}>`)
+        .join(", ") || "none";
+    const punishment = `**${LABEL[action]}**${duration ? ` for **${formatDuration(duration)}**` : ""}`;
+
     await ctx.ok(
-      `Anti-spam is now **on**. Anyone who repeats the same message **${count}** times in a row will be ${RESULT[action](duration)}.\n` +
-        `Members with Manage Messages are ignored. Use \`${ctx.prefix}antispamignore\` to skip a channel.`,
-      "Anti-spam"
+      `${ctx.author} If a user posts **${count}** same messages in a row, I will ${punishment} them.\n` +
+        `\u2003__IgnoredChannels__: ${ignored}`,
+      "Anti-Spam Enabled"
     );
   },
 };

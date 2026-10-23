@@ -11,7 +11,7 @@ export default {
   async run(ctx) {
     const embed = ok(
       "Messages can also be a JSON embed, e.g.\n" +
-        '```json\n{"plainText":"Hi %user.mention%","title":"Welcome!","description":"Member #%server.members%","color":"4caf8f","thumbnail":"%user.avatar%"}\n```',
+        '```json\n{"plainText":"Hi %user%","title":"Welcome!","description":"Member #%server.members%","color":"4caf8f","thumbnail":"%user.avatar%"}\n```',
       "Placeholders"
     );
 
