@@ -1,25 +1,44 @@
 import { PermissionFlagsBits } from "discord.js";
-import { ok } from "../../lib/embed.js";
+import { error, pending } from "../../lib/embed.js";
+
+const AMOUNT = 100;
+const CHUNK = 10; // messages deleted per step, so the progress counter can move
+
+const progress = n => pending(`Pruning... ${n}/${AMOUNT} messages deleted.`);
 
 export default {
   name: "clear",
   aliases: ["prune"],
   group: "Moderation",
-  description: "Deletes the last N messages in this channel (1-100). Messages older than 14 days can't be deleted.",
-  usage: ["{p}clear <amount>"],
-  examples: ["{p}clear 20"],
+  description:
+    "Deletes the last 100 messages in this channel. Your command and Frieren's status message disappear too. Messages older than 14 days can't be deleted.",
+  usage: ["{p}clear"],
+  examples: ["{p}clear"],
   userPerms: [PermissionFlagsBits.ManageMessages],
   botPerms: [PermissionFlagsBits.ManageMessages],
 
   async run(ctx) {
-    const amount = Number(ctx.args[0]);
-    if (!Number.isInteger(amount) || amount < 1 || amount > 100) return ctx.usage();
+    const status = await ctx.reply({ embeds: [progress(0)] });
 
-    // +1 so the command message itself is removed too
-    const deleted = await ctx.channel.bulkDelete(amount + 1, true);
-    const count = Math.max(0, deleted.size - (deleted.has(ctx.message.id) ? 1 : 0));
+    // Newest first. The status message is newer than the command, so it's never part of this.
+    const fetched = await ctx.channel.messages.fetch({ limit: AMOUNT, before: ctx.message.id });
+    const ids = [...fetched.keys()];
 
-    const sent = await ctx.channel.send({ embeds: [ok(`Deleted **${count}** message(s).`)] });
-    setTimeout(() => sent.delete().catch(() => {}), 5_000);
+    let count = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const deleted = await ctx.channel.bulkDelete(ids.slice(i, i + CHUNK), true);
+      count += deleted.size;
+      await status.edit({ embeds: [progress(count)] }).catch(() => {});
+    }
+
+    await ctx.message.delete().catch(() => {});
+
+    if (count > 0) return status.delete().catch(() => {});
+
+    // Nothing was deleted (e.g. everything is older than 14 days): say so, then clean up.
+    await status
+      .edit({ embeds: [error("Nothing to delete. Messages older than 14 days can't be removed.")] })
+      .catch(() => {});
+    setTimeout(() => status.delete().catch(() => {}), 5_000);
   },
 };
